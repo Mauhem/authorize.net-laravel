@@ -1,0 +1,25 @@
+{
+    "name": "mauhem/authorize.net-laravel",
+    "description": "Wrapper for Authorize.net SDK",
+    "type": "library",
+    "require": {
+        "php": ">=7.0.0",
+        "authorizenet/authorizenet": "1.9.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6"
+    },
+    "license": "GPLv3",
+    "authors": [
+        {
+            "name": "Roman Kapanets",
+            "email": "me@wm-talk.net"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-0": {
+              "AnetWrapper": "src/"
+        }
+    }
+}
