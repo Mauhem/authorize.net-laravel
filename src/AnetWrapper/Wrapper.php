@@ -45,9 +45,9 @@ class Wrapper
 
     private $creditCard;
 
-    private $paymentCreditCard;
+    private $paymentCreditCard = null;
 
-    private $billProfile;
+    private $billProfile = null;
 
     private $paymentProfiles = [];
 
@@ -247,6 +247,101 @@ class Wrapper
     }
 
     /**
+     * @param string $customerProfileId
+     * @param string $customerPaymentProfileId
+     * @param string $environment
+     * @return AnetAPI\AnetApiResponseType
+     */
+    public function updatePaymentProfile(
+        string $customerProfileId,
+        string $customerPaymentProfileId,
+        string $environment = 'sandbox'
+    ) {
+
+        $env = \net\authorize\api\constants\ANetEnvironment::SANDBOX;
+        switch ($environment) {
+            case 'sandbox':
+                $env = \net\authorize\api\constants\ANetEnvironment::SANDBOX;
+                break;
+            case 'production':
+                $env = \net\authorize\api\constants\ANetEnvironment::PRODUCTION;
+                break;
+        }
+
+        $request = new AnetAPI\UpdateCustomerPaymentProfileRequest();
+        $request->setMerchantAuthentication($this->auth);
+        $request->setCustomerProfileId($customerProfileId);
+//        $controller = new AnetController\GetCustomerProfileController($request);
+
+        // Create the Customer Payment Profile object
+        $paymentProfile = new AnetAPI\CustomerPaymentProfileExType();
+        $paymentProfile->setCustomerPaymentProfileId($customerPaymentProfileId);
+
+        $receiveProfile = $this->getCustomerPaymentProfile($customerProfileId, $customerPaymentProfileId);
+
+        if ($this->billProfile != null) {
+            $paymentProfile->setBillTo($this->billProfile);
+        }elseif ($receiveProfile != null){
+            $paymentProfile->setBillTo($receiveProfile->getPaymentProfile()->getbillTo());
+        }
+        if ($this->paymentCreditCard != null) {
+            $paymentProfile->setPayment($this->paymentCreditCard);
+        }elseif($receiveProfile != null){
+            $paymentProfile->setPayment($receiveProfile->getPaymentProfile()->getPayment());
+        }
+
+        // Submit a UpdatePaymentProfileRequest
+        if (!empty($this->validationMode)
+            and ($this->validationMode == 'testMode' or $this->validationMode == 'liveMode')) {
+            $request->setValidationMode($this->validationMode);
+        }
+
+        $request->setPaymentProfile($paymentProfile);
+
+        $controller = new AnetController\UpdateCustomerPaymentProfileController($request);
+
+        $response = $controller->executeWithApiResponse($env);
+
+        return $response;
+
+//        if (($response != null) && ($response->getMessages()->getResultCode() == "Ok") )
+//        {
+//            echo "Update Customer Payment Profile SUCCESS: " . "\n";
+//        }
+//        else
+//        {
+//            echo "Update Customer Payment Profile: ERROR Invalid response\n";
+//            $errorMessages = $response->getMessages()->getMessage();
+//            echo "Response : " . $errorMessages[0]->getCode() . "  " .$errorMessages[0]->getText() . "\n";
+//        }
+    }
+
+    public function getCustomerPaymentProfile(
+        string $customerProfileId,
+        string $customerPaymentProfileId
+    ) {
+
+        // Set the transaction's refId
+        $refId = 'ref' . time();
+
+        //request requires customerProfileId and customerPaymentProfileId
+        $request = new AnetAPI\GetCustomerPaymentProfileRequest();
+        $request->setMerchantAuthentication($this->auth);
+        $request->setRefId($refId);
+        $request->setCustomerProfileId($customerProfileId);
+        $request->setCustomerPaymentProfileId($customerPaymentProfileId);
+
+        $controller = new AnetController\GetCustomerPaymentProfileController($request);
+        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        if (($response != null)) {
+            if ($response->getMessages()->getResultCode() == "Ok") {
+                return $response;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Create customer profile
      *
      * @param string $description - Profile description
@@ -364,7 +459,7 @@ class Wrapper
      * @param string $profileId
      * @param string $paymentProfileId
      * @param float $amount
-     * @param string $environment       Default - sandbox. sandbox or production
+     * @param string $environment Default - sandbox. sandbox or production
      *
      * @return AnetAPI\AnetApiResponseType
      */

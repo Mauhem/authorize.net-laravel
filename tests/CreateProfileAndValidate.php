@@ -36,7 +36,7 @@ final class CreateProfileAndValidate extends TestCase
         $wrapper->createPaymentProfile();
         $wrapper->createCustomerProfile('Customer 2 Test PHP', 'M' . time(), 'test@onnet.work');
 
-        $wrapper->validationMode = 'liveMode';
+        $wrapper->validationMode = 'testMode';
 
         $response = $wrapper->sendRequest();
 

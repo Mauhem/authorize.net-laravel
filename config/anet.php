@@ -11,4 +11,6 @@ return [
 
 
     'transactionKey' => env('AUTHORIZE_NET_TRANSACTION_KEY', ''),
+
+    'environment' => env('AUTHORIZE_NET_ENVIRONMENT', 'sandbox'),
 ];
